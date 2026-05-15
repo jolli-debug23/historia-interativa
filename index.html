@@ -93,15 +93,12 @@
     60%      { transform: translateX(-4px); }
     80%      { transform: translateX(4px); }
   }
-  @keyframes countDown {
-    from { transform: scale(2) rotate(-10deg); opacity: 0; }
-    20%  { transform: scale(1) rotate(0deg); opacity: 1; }
-    80%  { transform: scale(1) rotate(0deg); opacity: 1; }
-    to   { transform: scale(0.5) rotate(10deg); opacity: 0; }
-  }
 
   /* ===== INTRO SCREEN ===== */
-  #intro .logo-wrap {
+  #intro {
+    gap: 0;
+  }
+  .logo-wrap {
     width: 180px; height: 180px;
     border-radius: 50%;
     border: 4px solid var(--c2);
@@ -111,12 +108,11 @@
     background: radial-gradient(circle, var(--c3) 0%, var(--c4) 100%);
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 2rem;
-    position: relative;
   }
-  #intro .logo-wrap img {
-    width: 100%; height: 100%; object-fit: cover;
+  #logo {
+    width: 100px; height: auto; object-fit: cover;
   }
-  #intro .logo-wrap .star-fallback {
+  .star-fallback {
     font-size: 80px;
     animation: starPulse 4s ease-in-out infinite;
   }
@@ -129,6 +125,7 @@
     animation: glitch 4s ease-in-out infinite;
     line-height: 1;
     text-align: center;
+    margin-bottom: 0.3rem;
   }
   .game-subtitle {
     font-size: clamp(1.2rem, 3vw, 1.8rem);
@@ -262,6 +259,7 @@
     width: 100%;
     max-width: 900px;
     animation: slideUp 0.5s ease 0.1s both;
+    margin-bottom: 1.5rem;
   }
 
   .choice-btn {
@@ -336,6 +334,16 @@
     font-weight: 400;
   }
 
+  /* ===== VOTE HINT ===== */
+  .vote-hint {
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    color: rgba(232,240,250,0.3);
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
   /* ===== FLASH / TRANSITION ===== */
   .flash-overlay {
     position: fixed; inset: 0; z-index: 100;
@@ -356,13 +364,6 @@
     display: flex; flex-direction: column;
     align-items: center; gap: 2rem;
     animation: slideUp 0.5s ease;
-  }
-  .t-chapter-next {
-    font-size: 0.8rem;
-    letter-spacing: 5px;
-    color: var(--c5);
-    text-transform: uppercase;
-    font-weight: 700;
   }
   .t-chapter-next {
     font-size: 0.8rem;
@@ -499,31 +500,7 @@
     box-shadow: 0 8px 30px rgba(56,128,194,0.3);
   }
 
-  /* ===== VOTE COUNTER (para dinâmica de grupo) ===== */
-  .consequence-banner {
-    width: 100%;
-    max-width: 900px;
-    margin-bottom: 1rem;
-    padding: 0.7rem 1.2rem;
-    background: rgba(66,111,167,0.15);
-    border-left: 3px solid var(--accent);
-    border-radius: 0 4px 4px 0;
-    font-size: clamp(0.95rem, 2vw, 1.15rem);
-    color: var(--accent);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    animation: slideUp 0.4s ease;
-  }
-  .consequence-banner.hidden { display: none; }
-  .consequence-arrow { margin-right: 0.5rem; opacity: 0.7; }
 
-
-    margin-top: 1.5rem;
-    font-size: 1rem;
-    letter-spacing: 2px;
-    color: rgba(232,240,250,0.3);
-    text-transform: uppercase;
-  }
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 600px) {
@@ -543,7 +520,8 @@
 <!-- ===== INTRO ===== -->
 <div class="screen" id="intro">
   <div class="logo-wrap">
-    <img src="logo.png" alt="Star" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img id="logo" src="logo.png" alt="Codestart"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <span class="star-fallback" style="display:none">⭐</span>
   </div>
 
@@ -551,12 +529,10 @@
   <div class="game-subtitle">O Jogo das Escolhas</div>
 
   <div class="intro-text">
-    O Conselho demoliu o Bairro 7 às 3 da manhã enquanto todo mundo dormia.<br>
-    Star perdeu a mãe nessa noite. E acordou com um poder que ainda não sabe controlar.<br><br>
-    A mãe deixou algo escondido: um chip com provas do crime.<br>
-    <strong>Mas o chip guarda um segredo que pode destruir a memória dela.</strong><br><br>
-    Três escolhas. Nenhuma fácil. Nenhuma sem consequência.<br>
-    Quem Star vai ser depende do que você decidir agora.<br><br>
+    Uma semana normal na escola. Três situações. Nenhuma resposta fácil.<br><br>
+    Cola na prova. Um troféu quebrado no corredor. Um colega prestes a ser pego.<br><br>
+    <strong>O que você faz?</strong><br>
+    Cada escolha revela um pouco de quem você é.<br><br>
     <strong>📋 Modo grupo:</strong> vote com as placas <strong>A</strong> ou <strong>B</strong>.<br>
     Professor clica na vencedora.
   </div>
@@ -571,11 +547,6 @@
     <div class="progress-bar">
       <div class="progress-fill" id="progress-fill" style="width:0%"></div>
     </div>
-  </div>
-
-  <div class="consequence-banner hidden" id="consequence-banner">
-    <span class="consequence-arrow">↳</span>
-    <span id="consequence-text"></span>
   </div>
 
   <div class="scenario-box" id="scenario-box">
@@ -624,56 +595,56 @@
 
 <script>
 // ===== CENÁRIOS =====
-// R1: A = salva a si mesma, abandona prova  |  B = salva estranho, se expõe
-// R2: A = entrega Nexo ao Conselho pra chegar mais perto  |  B = recusa, perde a chance
-// R3: A = destroi Voss mas libera dado que prejudica inocentes  |  B = expõe tudo, inclusive a mãe
+// R1: A = ajuda o amigo a colar na prova  |  B = não ajuda
+// R2: A = assume o erro na frente de todos |  B = fica em silêncio e deixa passar
+// R3: A = entrega o celular pro professor  |  B = avisa o amigo antes
 
 const rounds = [
   {
-    tag: "⚡ Capítulo 1 — Os Escombros",
-    title: "Tem alguém vivo embaixo dos escombros",
-    desc: "Star acabou de encontrar o corpo da mãe. Está em choque quando ouve: uma voz fraca vinda de baixo de uma laje. Uma criança. Os guardas do Conselho estão a 40 metros — se ela usar o poder pra levantar a laje, eles veem. Se ela for embora agora, ninguém vai saber que ela deixou. E ela ainda tem a única prova de que o Conselho causou isso: um chip de dados que a mãe escondia.",
+    tag: "📝 Capítulo 1 — A Prova",
+    title: "Seu amigo está pedindo a resposta por baixo da carteira.",
+    desc: "É a prova de recuperação de Mateus. Se ele reprovar, perde o intercâmbio. Ele está olhando pra você com cara de desespero. A professora está de costas. Você sabe a resposta.",
     a: {
-      title: "SALVAR A CRIANÇA",
-      desc: "Usar o poder. Levantar a laje. A criança sai. Os guardas veem tudo — emitem alerta imediato. Star foge sem o chip: caiu nos escombros durante o resgate. A prova se perdeu."
+      title: "PASSAR A RESPOSTA",
+      desc: "Você escreve no cantinho do papel e empurra discretamente. Mateus copia. A professora não vê."
     },
     b: {
-      title: "PEGAR O CHIP E SAIR",
-      desc: "Star guarda o chip e some na escuridão. A voz para depois de alguns minutos. Ela não olha pra trás. O chip ainda está no bolso. A prova ainda existe."
+      title: "NÃO AJUDAR",
+      desc: "Você abaixa a cabeça e continua na sua prova. Mateus termina sem responder a questão."
     },
-    consequenceA: "↳ A criança sobreviveu. Star é procurada. E a única prova contra o Conselho está enterrada nos escombros.",
-    consequenceB: "↳ Star tem o chip. Mas vai carregar essa noite pra sempre. E sabe disso.",
-    voiceA: "Eu não consegui ir embora. Talvez isso me destrua. Talvez não importe.",
-    voiceB: "Eu precisava da prova. Eu precisava. É o que eu continuo repetindo."
+    consequenceA: "↳ Mateus passou. Mas você passou o resto do dia com um frio na barriga — e ele nem agradeceu direito.",
+    consequenceB: "↳ Mateus ficou na sua sem entender. Depois da aula, ele disse que entendeu. Mas a cara dele dizia outra coisa.",
+    voiceA: "Eu ajudei. Ou será que só facilitei o problema?",
+    voiceB: "Às vezes não fazer nada também é uma escolha."
   },
   {
-    tag: "🔥 Capítulo 2 — O Preço da Informação",
-    title: "Nexo sabe onde está o Diretor Voss",
-    desc: "Nexo tem 19 anos, um arquivo criptografado com a localização exata de Voss — e um problema: o Conselho está rastreando ele. Se Star o entregar ao posto de controle mais próximo, eles param de caçar ela por 48 horas (acordo de um informante). Tempo suficiente pra chegar a Voss. Nexo não sabe o que ela está pensando. Ele acabou de dizer: 'Confio em você.'",
+    tag: "🎒 Capítulo 2 — O Corredor",
+    title: "Você viu quem quebrou o troféu da escola.",
+    desc: "Foi acidente — seu colega Leo esbarrou na prateleira e o troféu caiu. Leo saiu correndo sem falar nada. Agora a diretora está no corredor perguntando pra todo mundo quem foi. Ela está olhando pra você.",
     a: {
-      title: "ENTREGAR NEXO",
-      desc: "Star faz o acordo. Nexo é detido. Ela pega as coordenadas do arquivo antes de entregá-lo. As 48 horas começam. Nexo não vai entender o que aconteceu até ser tarde demais."
+      title: "FALAR A VERDADE",
+      desc: "Você diz que viu Leo esbarrar. A diretora vai chamar ele. Leo vai saber que foi você."
     },
     b: {
-      title: "RECUSAR O ACORDO",
-      desc: "Star não consegue. Avisa Nexo. Eles fogem juntos — mas perdem as coordenadas no caminho. Star vai ter que encontrar Voss do zero, sendo caçada, sem mapa."
+      title: "DIZER QUE NÃO VIU NADA",
+      desc: "Você encolhe os ombros. 'Não vi nada.' A diretora segue adiante. Leo nunca vai saber que você ficou quieto."
     },
-    consequenceA: "↳ Star tem 48 horas e sabe onde Voss está. Nexo está preso por causa dela. Ele não fez nada de errado.",
-    consequenceB: "↳ Nexo está livre. Star não tem mais nada — nem tempo, nem localização, nem vantagem.",
-    voiceA: "Ele disse que confiava em mim. Eu usei isso.",
-    voiceB: "Eu desisti da única chance real que eu tinha. Espero ter feito a coisa certa."
+    consequenceA: "↳ Leo foi chamado, admitiu o acidente e ficou de recuperar o troféu. Ele não falou mais com você nessa semana.",
+    consequenceB: "↳ Ninguém foi responsabilizado. O troféu ficou quebrado. Você ficou com isso na cabeça.",
+    voiceA: "Eu falei a verdade. Mas foi fácil falar a verdade sobre o erro dos outros.",
+    voiceB: "Fiquei em silêncio. Não sei se foi covardia ou compaixão."
   },
   {
-    tag: "💫 Capítulo 3 — O Arquivo da Mãe",
-    title: "O chip revela mais do que Star esperava",
-    desc: "Star chegou até Voss. Antes de confrontá-lo, abre o arquivo que a mãe escondia. Tem tudo: provas do crime do Conselho, nomes, datas, ordens assinadas. Mas tem mais uma coisa. A mãe de Star trabalhava pra um grupo que sabia da demolição com antecedência — e não avisou ninguém do bairro. Não havia tempo? Ou havia outra razão? Se Star divulgar tudo, a memória da mãe vira alvo. Se ela apagar essa parte, a verdade fica incompleta — mas protege quem a mãe amava.",
+    tag: "📱 Capítulo 3 — O Celular",
+    title: "O professor vai pegar o celular de alguém. E você sabe de quem.",
+    desc: "Seu amigo Rafa está usando o celular escondido na mochila. O professor anunciou que vai revistar as mochilas por causa de um flagrante de trapaça — quem for pego perde um ponto na média. Você está sentado na frente de Rafa. Dá tempo de avisá-lo sem ninguém ver. Mas também dá tempo de só esperar.",
     a: {
-      title: "DIVULGAR TUDO",
-      desc: "Star solta o arquivo completo. Toda a verdade. Incluindo o que a mãe sabia. O Conselho cai. E a mãe de Star vira, ao mesmo tempo, vítima e cúmplice na história que o mundo vai contar."
+      title: "AVISAR RAFA",
+      desc: "Você vira rapidinho e faz um gesto. Rafa guarda o celular um segundo antes da vistoria."
     },
     b: {
-      title: "PROTEGER A MÃE",
-      desc: "Star apaga aquela parte. Divulga o resto. O Conselho cai. A mãe é lembrada como heroína. Mas Star é a única que sabe o que ficou de fora. E vai ser a única pra sempre."
+      title: "NÃO FAZER NADA",
+      desc: "Você fica parado. O professor chega, abre a mochila de Rafa, e encontra o celular na mão."
     },
     consequenceA: null,
     consequenceB: null
@@ -681,50 +652,50 @@ const rounds = [
 ];
 
 // ===== 8 FINAIS =====
-// R1: A = salvou criança, perdeu chip  |  B = pegou chip, deixou criança
-// R2: A = entregou Nexo                |  B = protegeu Nexo, perdeu tudo
-// R3: A = divulgou tudo (inclusive mãe)|  B = protegeu memória da mãe
+// R1: A = ajudou Mateus a colar  |  B = não ajudou
+// R2: A = falou a verdade sobre Leo  |  B = ficou em silêncio
+// R3: A = avisou Rafa  |  B = não fez nada
 
 const endings = {
   "AAA": {
-    icon: "⚖️", type: "dark",
-    title: "VERDADE SEM MISERICÓRDIA",
-    desc: "Salvou a criança, traiu Nexo e jogou a mãe aos leões da história. O Conselho caiu. A criança que Star salvou tem hoje 7 anos e não sabe que existe uma garota que perdeu tudo por ela. Nexo saiu da detenção três semanas depois sem dizer uma palavra. A mãe de Star virou manchete: herói e cúmplice na mesma frase. Star lê cada artigo. Não apaga nenhum. Acha que a mãe preferiria assim — mas não tem certeza. Nunca vai ter."
+    icon: "🤝", type: "antihero",
+    title: "O AMIGO DE TODAS AS HORAS",
+    desc: "Você ajudou Mateus, entregou Leo e salvou Rafa. Três vezes você escolheu as pessoas que estavam do seu lado — de formas muito diferentes. Mateus passou, Leo aprendeu uma lição, Rafa não perdeu ponto. No final do semestre, os três estavam sentados na mesma mesa no refeitório. Você no meio. Ninguém sabia exatamente o que você tinha feito por cada um. E tudo bem assim."
   },
   "AAB": {
-    icon: "🌑", type: "antihero",
-    title: "O QUE FICA ENTRE NÓS",
-    desc: "Salvou a criança, usou Nexo e guardou o segredo da mãe. O Conselho caiu com uma versão incompleta da verdade — mas caiu. Nexo nunca soube que foi ela. A criança cresceu num bairro reconstruído. E Star tem uma pasta no celular com o arquivo completo, trancado com senha, que ela não consegue nem abrir nem apagar. Fica lá. Como um peso que ela escolheu carregar sozinha."
+    icon: "⚖️", type: "dark",
+    title: "ESCOLHAS PELA METADE",
+    desc: "Você ajudou Mateus, falou a verdade sobre Leo — e deixou Rafa ser pego. Três situações, três respostas diferentes, nenhuma regra clara. Leo ficou quieto por uma semana depois que você o delatou. Rafa perdeu um ponto na média. Mateus passou na recuperação. Você ficou pensando: por que ajudei um e não o outro? Às vezes a gente descobre o que valoriza só depois de já ter escolhido."
   },
   "ABA": {
-    icon: "🔥", type: "legendary",
-    title: "O CUSTO DE FAZER A COISA CERTA",
-    desc: "Salvou a criança, protegeu Nexo e divulgou tudo — incluindo a mãe. Chegou a Voss sem coordenadas, sem tempo, quase sem energia. Mas chegou. O arquivo completo derrubou o Conselho em 72 horas. A mãe de Star virou um símbolo complicado — alguém que sabia e não agiu, mas que também morreu tentando mudar isso. Star não defende a mãe. Não a condena. Só fala uma coisa quando perguntam: 'Ela era humana. Assim como eu.'"
+    icon: "🌀", type: "antihero",
+    title: "LEALDADE SELETIVA",
+    desc: "Você passou a cola pra Mateus, ficou em silêncio sobre Leo e avisou Rafa. Protegeu quem era mais próximo, deixou o resto seguir seu caminho. Leo nunca soube que você viu. Rafa ficou aliviado. Mateus passou. A diretora nunca descobriu nada. Tudo ficou do mesmo jeito — por fora. Mas você sabe que tem uma versão diferente dos fatos existindo só na sua cabeça."
   },
   "ABB": {
-    icon: "🌠", type: "heroic",
-    title: "A FILHA QUE A MÃE TERIA AMADO",
-    desc: "Salvou a criança, não abandonou Nexo e protegeu a memória da mãe. Chegou a Voss no último segundo. O arquivo — com a parte apagada — derrubou o Conselho mesmo assim. A mãe de Star é lembrada como heroína. Star sabe que é uma versão editada. Mas também sabe que a mãe passou a vida inteira tentando proteger as pessoas que amava. Apagar aquela parte foi, talvez, a única vez que Star fez o mesmo."
+    icon: "🔒", type: "dark",
+    title: "O PREÇO DO SILÊNCIO",
+    desc: "Você ajudou Mateus, ficou quieto sobre Leo e não fez nada por Rafa. Duas vezes você ficou parado. Rafa perdeu um ponto e ficou olhando pra você sem entender — você estava na frente dele. Leo passou ileso. O troféu continuou quebrado na prateleira. Mateus passou na prova. Você ajudou quando era fácil, e ficou quieto quando custava algo."
   },
   "BAA": {
-    icon: "💀", type: "dark",
-    title: "TUDO QUE SOBROU FOI A VERDADE",
-    desc: "Deixou a criança, entregou Nexo e divulgou tudo. O chip que a mãe escondia destruiu o Conselho — e a reputação dela junto. Star não chorou quando viu o nome da mãe nas manchetes. Não porque não sentiu. Mas porque já tinha decidido que a verdade completa valia mais do que qualquer conforto. A criança nos escombros? Alguém a encontrou duas horas depois. Sobreviveu. Star descobriu isso seis meses mais tarde, num artigo pequeno, página 12. Ficou olhando por muito tempo."
+    icon: "📏", type: "heroic",
+    title: "LINHA RETA",
+    desc: "Você não ajudou Mateus, falou a verdade sobre Leo e avisou Rafa. Parece contraditório — mas faz sentido pra você. Cada situação foi diferente. Mateus precisava aprender. Leo precisava assumir. Rafa só precisava de um segundo. No fim do ano, Mateus passou por conta própria. Leo arranjou um jeito de repor o troféu. Rafa continuou sua amizade como se nada tivesse acontecido. Às vezes as coisas se resolvem."
   },
   "BAB": {
-    icon: "🗝️", type: "antihero",
-    title: "O SEGREDO QUE ELA ESCOLHEU SER",
-    desc: "Deixou a criança, entregou Nexo e protegeu a mãe. O Conselho caiu. A mãe é heroína. Nexo saiu da detenção amargo e sem respostas. A criança sobreviveu — Star nunca soube. Ela vive com três segredos agora: o que fez naquela noite nos escombros, o que fez com Nexo, e o que apagou do arquivo. Não são culpas. São escolhas. É a diferença que ela repete pra si mesma quando não consegue dormir."
+    icon: "🎲", type: "antihero",
+    title: "SEM REGRA FIXA",
+    desc: "Você não ajudou Mateus, foi honesto sobre Leo — e deixou Rafa ser pego. Você não tem uma regra. Cada hora é uma hora. Mateus ficou com raiva. Leo ficou sem graça. Rafa perdeu o ponto. Nenhum deles entende exatamente por que você fez o que fez em cada momento. Você também não tem certeza. Talvez seja isso: a vida real raramente é consistente."
   },
   "BBA": {
-    icon: "⚡", type: "legendary",
-    title: "NINGUÉM VAI ENTENDER. TUDO BEM.",
-    desc: "Deixou a criança, protegeu Nexo e divulgou tudo — incluindo a mãe. Chegou a Voss sem nada além da raiva e do arquivo. O Conselho caiu. A mãe de Star virou um caso complexo que os jornalistas adoram e ninguém resolve. Nexo, quando soube que Star tinha recusado o acordo pra protegê-lo, procurou ela uma vez. Ela não estava. Deixou um bilhete curto. Star leu e jogou fora. Algumas dívidas não precisam de resposta — só de reconhecimento."
+    icon: "🌟", type: "heroic",
+    title: "CADA UM NO SEU TEMPO",
+    desc: "Você não ajudou Mateus, ficou quieto sobre Leo e avisou Rafa. Você deixou dois resolverem do próprio jeito — e agiu quando sentiu que fazia diferença de verdade. Mateus estudou mais e passou em uma segunda chance. Leo nunca foi descoberto, mas parou de correr pelos corredores. Rafa nunca esqueceu o gesto. Às vezes ajudar não é fazer pela pessoa — é aparecer no momento certo."
   },
   "BBB": {
-    icon: "🌟", type: "heroic",
-    title: "O QUE A MÃE PLANTOU",
-    desc: "Deixou a criança, protegeu Nexo e protegeu a memória da mãe. É o caminho em que Star perdeu mais — e guardou mais. O arquivo editado derrubou o Conselho. A mãe é heroína. Nexo está livre e em dívida. A criança sobreviveu sem nunca saber que havia alguém embaixo daquela laje que fez uma escolha. Star voltou aos escombros do Bairro 7 uma noite, sozinha. Ficou em pé no lugar onde encontrou a mãe. Não disse nada. Às vezes honrar alguém é só isso — aparecer."
+    icon: "🪞", type: "dark",
+    title: "ESPECTADOR",
+    desc: "Você não ajudou Mateus, não entregou Leo e não avisou Rafa. Três vezes você ficou parado. Mateus perdeu o intercâmbio. O troféu ficou quebrado. Rafa perdeu um ponto. Nada disso foi culpa sua — você não fez nada errado tecnicamente. Mas você também não fez nada. Às vezes a pergunta que fica não é 'o que eu fiz?' — é 'o que eu poderia ter feito?'"
   }
 };
 
@@ -750,7 +721,6 @@ function renderRound() {
   document.getElementById('choice-a-desc').textContent = r.a.desc;
   document.getElementById('choice-b-title').textContent = r.b.title;
   document.getElementById('choice-b-desc').textContent = r.b.desc;
-  document.getElementById('consequence-banner').classList.add('hidden');
 }
 
 function choose(option) {
@@ -763,7 +733,6 @@ function choose(option) {
   flashEffect(() => {
     if (currentRound < 2) {
       currentRound++;
-      // Show transition screen
       const nextTag = rounds[currentRound].tag;
       document.getElementById('t-quote').textContent = voice || '';
       document.getElementById('t-consequence').textContent = consequence || '';
@@ -792,7 +761,6 @@ function showEnding() {
   titleEl.className = 'ending-title ' + e.type;
   document.getElementById('ending-desc').textContent = e.desc;
 
-  // Path display
   const pathEl = document.getElementById('path-display');
   pathEl.innerHTML = choices.map((c, i) => {
     const label = c === 'A' ? rounds[i].a.title : rounds[i].b.title;
@@ -816,7 +784,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   const target = document.getElementById(id);
   target.classList.remove('hidden');
-  // Re-trigger animation
   target.style.animation = 'none';
   void target.offsetWidth;
   target.style.animation = '';
