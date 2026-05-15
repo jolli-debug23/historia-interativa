@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STAR — O Jogo das Escolhas</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c1: #426fa7;
+    --c2: #3880c2;
+    --c3: #1b558b;
+    --c4: #214184;
+    --c5: #608bc1;
+    --glow: #7fb3e8;
+    --dark: #080c14;
+    --darker: #040609;
+    --light: #e8f0fa;
+    --accent: #f0c040;
+    --danger: #e8442a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Barlow Condensed', sans-serif;
+    background: var(--darker);
+    color: var(--light);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ===== BACKGROUND EFFECTS ===== */
+  .bg-fx {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(56,128,194,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 90%, rgba(33,65,132,0.22) 0%, transparent 70%),
+      var(--darker);
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(96,139,193,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(96,139,193,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .scanlines {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+    animation: fadeIn 0.5s ease;
+  }
+  .screen.hidden { display: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(60px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 20px rgba(56,128,194,0.4); }
+    50%      { box-shadow: 0 0 50px rgba(96,139,193,0.8), 0 0 80px rgba(56,128,194,0.3); }
+  }
+  @keyframes glitch {
+    0%,100% { text-shadow: 2px 0 var(--c2), -2px 0 var(--accent); }
+    25%      { text-shadow: -2px 0 var(--c2), 2px 0 var(--danger); }
+    50%      { text-shadow: 0 2px var(--c5), 0 -2px var(--accent); }
+    75%      { text-shadow: 2px -2px var(--glow), -2px 2px var(--c4); }
+  }
+  @keyframes starPulse {
+    0%,100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+    50%      { transform: scale(1.08) rotate(3deg); filter: brightness(1.3); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+  }
+  @keyframes countDown {
+    from { transform: scale(2) rotate(-10deg); opacity: 0; }
+    20%  { transform: scale(1) rotate(0deg); opacity: 1; }
+    80%  { transform: scale(1) rotate(0deg); opacity: 1; }
+    to   { transform: scale(0.5) rotate(10deg); opacity: 0; }
+  }
+
+  /* ===== INTRO SCREEN ===== */
+  #intro .logo-wrap {
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 4px solid var(--c2);
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(56,128,194,0.6), inset 0 0 20px rgba(56,128,194,0.2);
+    animation: pulse 3s ease-in-out infinite, starPulse 4s ease-in-out infinite;
+    background: radial-gradient(circle, var(--c3) 0%, var(--c4) 100%);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  #intro .logo-wrap img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  #intro .logo-wrap .star-fallback {
+    font-size: 80px;
+    animation: starPulse 4s ease-in-out infinite;
+  }
+
+  .game-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 15vw, 10rem);
+    letter-spacing: 8px;
+    color: var(--light);
+    animation: glitch 4s ease-in-out infinite;
+    line-height: 1;
+    text-align: center;
+  }
+  .game-subtitle {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: var(--c5);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    font-weight: 600;
+  }
+
+  .intro-text {
+    max-width: 600px;
+    text-align: center;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    line-height: 1.6;
+    color: rgba(232,240,250,0.8);
+    margin-bottom: 3rem;
+    padding: 1.5rem 2rem;
+    border: 1px solid rgba(96,139,193,0.3);
+    border-radius: 4px;
+    background: rgba(33,65,132,0.15);
+    backdrop-filter: blur(10px);
+  }
+  .intro-text strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn-start {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    letter-spacing: 6px;
+    padding: 1rem 4rem;
+    background: linear-gradient(135deg, var(--c2), var(--c4));
+    color: var(--light);
+    border: 2px solid var(--c5);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(56,128,194,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-start::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  .btn-start:hover::before { transform: translateX(100%); }
+  .btn-start:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 40px rgba(56,128,194,0.7);
+    border-color: var(--glow);
+  }
+  .btn-start:active { transform: translateY(0); animation: shake 0.3s; }
+
+  /* ===== GAME SCREEN ===== */
+  #game {
+    padding: 1.5rem;
+    gap: 0;
+  }
+
+  .round-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 900px;
+  }
+  .round-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    color: var(--c5);
+    white-space: nowrap;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(96,139,193,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c2), var(--glow));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 10px rgba(127,179,232,0.8);
+  }
+
+  .scenario-box {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 1.5rem;
+    animation: slideUp 0.4s ease;
+  }
+  .scenario-tag {
+    font-size: 0.85rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .scenario-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--light);
+    line-height: 1.1;
+    margin-bottom: 0.8rem;
+  }
+  .scenario-desc {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    color: rgba(232,240,250,0.75);
+    line-height: 1.5;
+    font-weight: 400;
+    max-width: 700px;
+  }
+
+  /* ===== CHOICE BUTTONS ===== */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 900px;
+    animation: slideUp 0.5s ease 0.1s both;
+  }
+
+  .choice-btn {
+    position: relative;
+    padding: 2rem 1.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: 2px solid transparent;
+    overflow: hidden;
+    text-align: left;
+    display: flex; flex-direction: column;
+    gap: 0.5rem;
+    min-height: 180px;
+  }
+  .choice-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0.12;
+    transition: opacity 0.25s;
+  }
+  .choice-btn:hover::before { opacity: 0.22; }
+
+  .choice-a {
+    background: linear-gradient(135deg, rgba(33,65,132,0.5), rgba(27,85,139,0.3));
+    border-color: var(--c4);
+  }
+  .choice-a::before { background: linear-gradient(135deg, var(--c4), var(--c3)); }
+  .choice-a:hover {
+    border-color: var(--c2);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 40px rgba(33,65,132,0.5), inset 0 0 30px rgba(56,128,194,0.1);
+  }
+
+  .choice-b {
+    background: linear-gradient(135deg, rgba(66,111,167,0.4), rgba(96,139,193,0.2));
+    border-color: var(--c1);
+  }
+  .choice-b::before { background: linear-gradient(135deg, var(--c1), var(--c5)); }
+  .choice-b:hover {
+    border-color: var(--glow);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 40px rgba(66,111,167,0.5), inset 0 0 30px rgba(96,139,193,0.1);
+  }
+
+  .choice-letter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    line-height: 1;
+    color: rgba(232,240,250,0.15);
+    position: absolute;
+    bottom: 1rem; right: 1.5rem;
+  }
+  .choice-label {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--c5);
+    margin-bottom: 0.2rem;
+  }
+  .choice-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+    color: var(--light);
+    line-height: 1.1;
+  }
+  .choice-desc {
+    font-size: clamp(0.95rem, 2vw, 1.2rem);
+    color: rgba(232,240,250,0.65);
+    line-height: 1.4;
+    font-weight: 400;
+  }
+
+  /* ===== FLASH / TRANSITION ===== */
+  .flash-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--light);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+  .flash-overlay.flash-in { opacity: 0.4; pointer-events: all; }
+
+  /* ===== TRANSITION SCREEN ===== */
+  #transition {
+    background: radial-gradient(ellipse at center, rgba(27,85,139,0.25) 0%, transparent 70%);
+  }
+  .transition-inner {
+    max-width: 680px;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2rem;
+    animation: slideUp 0.5s ease;
+  }
+  .t-chapter-next {
+    font-size: 0.8rem;
+    letter-spacing: 5px;
+    color: var(--c5);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .t-chapter-next {
+    font-size: 0.8rem;
+    letter-spacing: 5px;
+    color: var(--c5);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: -0.5rem;
+  }
+  .t-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    color: var(--light);
+    line-height: 1.3;
+    letter-spacing: 1px;
+    position: relative;
+    padding: 0 1rem;
+  }
+  .t-quote::before {
+    content: '"';
+    font-size: 8rem;
+    color: rgba(96,139,193,0.1);
+    position: absolute;
+    top: -2rem; left: -0.5rem;
+    font-family: Georgia, serif;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .t-consequence {
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-left: 3px solid var(--accent);
+    background: rgba(240,192,64,0.06);
+    border-radius: 0 4px 4px 0;
+    text-align: left;
+    line-height: 1.6;
+    width: 100%;
+  }
+  .btn-continue {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 5px;
+    padding: 0.8rem 3rem;
+    background: linear-gradient(135deg, var(--c3), var(--c4));
+    color: var(--light);
+    border: 2px solid var(--c2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(56,128,194,0.3);
+  }
+  .btn-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(56,128,194,0.5);
+    border-color: var(--glow);
+  }
+
+  /* ===== ENDING SCREEN ===== */
+  #ending {
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .ending-tag {
+    font-size: 0.85rem;
+    letter-spacing: 5px;
+    color: var(--c5);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .ending-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 1;
+    max-width: 800px;
+    animation: glitch 5s ease-in-out infinite;
+  }
+  .ending-title.legendary { color: var(--accent); }
+  .ending-title.heroic    { color: var(--glow); }
+  .ending-title.antihero  { color: var(--c5); }
+  .ending-title.dark      { color: var(--danger); }
+
+  .ending-desc {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    max-width: 620px;
+    line-height: 1.6;
+    color: rgba(232,240,250,0.8);
+  }
+
+  .ending-icon {
+    font-size: 5rem;
+    animation: starPulse 3s ease-in-out infinite;
+  }
+
+  .path-display {
+    display: flex; gap: 0.6rem; align-items: center;
+    font-size: 1rem;
+    color: rgba(232,240,250,0.4);
+    letter-spacing: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .path-display .path-step {
+    background: rgba(96,139,193,0.15);
+    border: 1px solid rgba(96,139,193,0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--c5);
+  }
+  .path-display .arrow { color: rgba(232,240,250,0.2); }
+
+  .btn-restart {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 5px;
+    padding: 0.8rem 3rem;
+    background: transparent;
+    color: var(--c5);
+    border: 2px solid var(--c1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+  .btn-restart:hover {
+    background: rgba(66,111,167,0.2);
+    border-color: var(--c2);
+    color: var(--light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(56,128,194,0.3);
+  }
+
+  /* ===== VOTE COUNTER (para dinâmica de grupo) ===== */
+  .consequence-banner {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 1rem;
+    padding: 0.7rem 1.2rem;
+    background: rgba(66,111,167,0.15);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    animation: slideUp 0.4s ease;
+  }
+  .consequence-banner.hidden { display: none; }
+  .consequence-arrow { margin-right: 0.5rem; opacity: 0.7; }
+
+
+    margin-top: 1.5rem;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: rgba(232,240,250,0.3);
+    text-transform: uppercase;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .choices { grid-template-columns: 1fr; }
+    .choice-btn { min-height: 140px; }
+    .game-title { font-size: 5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-fx"></div>
+<div class="bg-grid"></div>
+<div class="scanlines"></div>
+<div class="flash-overlay" id="flash"></div>
+
+<!-- ===== INTRO ===== -->
+<div class="screen" id="intro">
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Star" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="star-fallback" style="display:none">⭐</span>
+  </div>
+
+  <div class="game-title">STAR</div>
+  <div class="game-subtitle">O Jogo das Escolhas</div>
+
+  <div class="intro-text">
+    O Conselho demoliu o Bairro 7 às 3 da manhã enquanto todo mundo dormia.<br>
+    Star perdeu a mãe nessa noite. E acordou com um poder que ainda não sabe controlar.<br><br>
+    A mãe deixou algo escondido: um chip com provas do crime.<br>
+    <strong>Mas o chip guarda um segredo que pode destruir a memória dela.</strong><br><br>
+    Três escolhas. Nenhuma fácil. Nenhuma sem consequência.<br>
+    Quem Star vai ser depende do que você decidir agora.<br><br>
+    <strong>📋 Modo grupo:</strong> vote com as placas <strong>A</strong> ou <strong>B</strong>.<br>
+    Professor clica na vencedora.
+  </div>
+
+  <button class="btn-start" onclick="startGame()">⭐ COMEÇAR</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div class="screen hidden" id="game">
+  <div class="round-header">
+    <span class="round-badge" id="round-label">RODADA 1 / 3</span>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="consequence-banner hidden" id="consequence-banner">
+    <span class="consequence-arrow">↳</span>
+    <span id="consequence-text"></span>
+  </div>
+
+  <div class="scenario-box" id="scenario-box">
+    <span class="scenario-tag" id="scene-tag"></span>
+    <div class="scenario-title" id="scene-title"></div>
+    <div class="scenario-desc" id="scene-desc"></div>
+  </div>
+
+  <div class="choices">
+    <button class="choice-btn choice-a" onclick="choose('A')">
+      <span class="choice-label">Opção A</span>
+      <div class="choice-title" id="choice-a-title"></div>
+      <div class="choice-desc" id="choice-a-desc"></div>
+      <span class="choice-letter">A</span>
+    </button>
+    <button class="choice-btn choice-b" onclick="choose('B')">
+      <span class="choice-label">Opção B</span>
+      <div class="choice-title" id="choice-b-title"></div>
+      <div class="choice-desc" id="choice-b-desc"></div>
+      <span class="choice-letter">B</span>
+    </button>
+  </div>
+
+  <div class="vote-hint">📋 Votem com as placas — professor clica na vencedora</div>
+</div>
+
+<!-- ===== TRANSITION ===== -->
+<div class="screen hidden" id="transition">
+  <div class="transition-inner">
+    <div class="t-chapter-next" id="t-chapter-next"></div>
+    <div class="t-quote" id="t-quote"></div>
+    <div class="t-consequence" id="t-consequence"></div>
+    <button class="btn-continue" onclick="continueToNextRound()">CONTINUAR →</button>
+  </div>
+</div>
+
+<!-- ===== ENDING ===== -->
+<div class="screen hidden" id="ending">
+  <div class="ending-icon" id="ending-icon"></div>
+  <div class="ending-tag">FINAL DESBLOQUEADO</div>
+  <div class="ending-title" id="ending-title"></div>
+  <div class="ending-desc" id="ending-desc"></div>
+  <div class="path-display" id="path-display"></div>
+  <button class="btn-restart" onclick="restartGame()">↩ JOGAR NOVAMENTE</button>
+</div>
+
+<script>
+// ===== CENÁRIOS =====
+// R1: A = salva a si mesma, abandona prova  |  B = salva estranho, se expõe
+// R2: A = entrega Nexo ao Conselho pra chegar mais perto  |  B = recusa, perde a chance
+// R3: A = destroi Voss mas libera dado que prejudica inocentes  |  B = expõe tudo, inclusive a mãe
+
+const rounds = [
+  {
+    tag: "⚡ Capítulo 1 — Os Escombros",
+    title: "Tem alguém vivo embaixo dos escombros",
+    desc: "Star acabou de encontrar o corpo da mãe. Está em choque quando ouve: uma voz fraca vinda de baixo de uma laje. Uma criança. Os guardas do Conselho estão a 40 metros — se ela usar o poder pra levantar a laje, eles veem. Se ela for embora agora, ninguém vai saber que ela deixou. E ela ainda tem a única prova de que o Conselho causou isso: um chip de dados que a mãe escondia.",
+    a: {
+      title: "SALVAR A CRIANÇA",
+      desc: "Usar o poder. Levantar a laje. A criança sai. Os guardas veem tudo — emitem alerta imediato. Star foge sem o chip: caiu nos escombros durante o resgate. A prova se perdeu."
+    },
+    b: {
+      title: "PEGAR O CHIP E SAIR",
+      desc: "Star guarda o chip e some na escuridão. A voz para depois de alguns minutos. Ela não olha pra trás. O chip ainda está no bolso. A prova ainda existe."
+    },
+    consequenceA: "↳ A criança sobreviveu. Star é procurada. E a única prova contra o Conselho está enterrada nos escombros.",
+    consequenceB: "↳ Star tem o chip. Mas vai carregar essa noite pra sempre. E sabe disso.",
+    voiceA: "Eu não consegui ir embora. Talvez isso me destrua. Talvez não importe.",
+    voiceB: "Eu precisava da prova. Eu precisava. É o que eu continuo repetindo."
+  },
+  {
+    tag: "🔥 Capítulo 2 — O Preço da Informação",
+    title: "Nexo sabe onde está o Diretor Voss",
+    desc: "Nexo tem 19 anos, um arquivo criptografado com a localização exata de Voss — e um problema: o Conselho está rastreando ele. Se Star o entregar ao posto de controle mais próximo, eles param de caçar ela por 48 horas (acordo de um informante). Tempo suficiente pra chegar a Voss. Nexo não sabe o que ela está pensando. Ele acabou de dizer: 'Confio em você.'",
+    a: {
+      title: "ENTREGAR NEXO",
+      desc: "Star faz o acordo. Nexo é detido. Ela pega as coordenadas do arquivo antes de entregá-lo. As 48 horas começam. Nexo não vai entender o que aconteceu até ser tarde demais."
+    },
+    b: {
+      title: "RECUSAR O ACORDO",
+      desc: "Star não consegue. Avisa Nexo. Eles fogem juntos — mas perdem as coordenadas no caminho. Star vai ter que encontrar Voss do zero, sendo caçada, sem mapa."
+    },
+    consequenceA: "↳ Star tem 48 horas e sabe onde Voss está. Nexo está preso por causa dela. Ele não fez nada de errado.",
+    consequenceB: "↳ Nexo está livre. Star não tem mais nada — nem tempo, nem localização, nem vantagem.",
+    voiceA: "Ele disse que confiava em mim. Eu usei isso.",
+    voiceB: "Eu desisti da única chance real que eu tinha. Espero ter feito a coisa certa."
+  },
+  {
+    tag: "💫 Capítulo 3 — O Arquivo da Mãe",
+    title: "O chip revela mais do que Star esperava",
+    desc: "Star chegou até Voss. Antes de confrontá-lo, abre o arquivo que a mãe escondia. Tem tudo: provas do crime do Conselho, nomes, datas, ordens assinadas. Mas tem mais uma coisa. A mãe de Star trabalhava pra um grupo que sabia da demolição com antecedência — e não avisou ninguém do bairro. Não havia tempo? Ou havia outra razão? Se Star divulgar tudo, a memória da mãe vira alvo. Se ela apagar essa parte, a verdade fica incompleta — mas protege quem a mãe amava.",
+    a: {
+      title: "DIVULGAR TUDO",
+      desc: "Star solta o arquivo completo. Toda a verdade. Incluindo o que a mãe sabia. O Conselho cai. E a mãe de Star vira, ao mesmo tempo, vítima e cúmplice na história que o mundo vai contar."
+    },
+    b: {
+      title: "PROTEGER A MÃE",
+      desc: "Star apaga aquela parte. Divulga o resto. O Conselho cai. A mãe é lembrada como heroína. Mas Star é a única que sabe o que ficou de fora. E vai ser a única pra sempre."
+    },
+    consequenceA: null,
+    consequenceB: null
+  }
+];
+
+// ===== 8 FINAIS =====
+// R1: A = salvou criança, perdeu chip  |  B = pegou chip, deixou criança
+// R2: A = entregou Nexo                |  B = protegeu Nexo, perdeu tudo
+// R3: A = divulgou tudo (inclusive mãe)|  B = protegeu memória da mãe
+
+const endings = {
+  "AAA": {
+    icon: "⚖️", type: "dark",
+    title: "VERDADE SEM MISERICÓRDIA",
+    desc: "Salvou a criança, traiu Nexo e jogou a mãe aos leões da história. O Conselho caiu. A criança que Star salvou tem hoje 7 anos e não sabe que existe uma garota que perdeu tudo por ela. Nexo saiu da detenção três semanas depois sem dizer uma palavra. A mãe de Star virou manchete: herói e cúmplice na mesma frase. Star lê cada artigo. Não apaga nenhum. Acha que a mãe preferiria assim — mas não tem certeza. Nunca vai ter."
+  },
+  "AAB": {
+    icon: "🌑", type: "antihero",
+    title: "O QUE FICA ENTRE NÓS",
+    desc: "Salvou a criança, usou Nexo e guardou o segredo da mãe. O Conselho caiu com uma versão incompleta da verdade — mas caiu. Nexo nunca soube que foi ela. A criança cresceu num bairro reconstruído. E Star tem uma pasta no celular com o arquivo completo, trancado com senha, que ela não consegue nem abrir nem apagar. Fica lá. Como um peso que ela escolheu carregar sozinha."
+  },
+  "ABA": {
+    icon: "🔥", type: "legendary",
+    title: "O CUSTO DE FAZER A COISA CERTA",
+    desc: "Salvou a criança, protegeu Nexo e divulgou tudo — incluindo a mãe. Chegou a Voss sem coordenadas, sem tempo, quase sem energia. Mas chegou. O arquivo completo derrubou o Conselho em 72 horas. A mãe de Star virou um símbolo complicado — alguém que sabia e não agiu, mas que também morreu tentando mudar isso. Star não defende a mãe. Não a condena. Só fala uma coisa quando perguntam: 'Ela era humana. Assim como eu.'"
+  },
+  "ABB": {
+    icon: "🌠", type: "heroic",
+    title: "A FILHA QUE A MÃE TERIA AMADO",
+    desc: "Salvou a criança, não abandonou Nexo e protegeu a memória da mãe. Chegou a Voss no último segundo. O arquivo — com a parte apagada — derrubou o Conselho mesmo assim. A mãe de Star é lembrada como heroína. Star sabe que é uma versão editada. Mas também sabe que a mãe passou a vida inteira tentando proteger as pessoas que amava. Apagar aquela parte foi, talvez, a única vez que Star fez o mesmo."
+  },
+  "BAA": {
+    icon: "💀", type: "dark",
+    title: "TUDO QUE SOBROU FOI A VERDADE",
+    desc: "Deixou a criança, entregou Nexo e divulgou tudo. O chip que a mãe escondia destruiu o Conselho — e a reputação dela junto. Star não chorou quando viu o nome da mãe nas manchetes. Não porque não sentiu. Mas porque já tinha decidido que a verdade completa valia mais do que qualquer conforto. A criança nos escombros? Alguém a encontrou duas horas depois. Sobreviveu. Star descobriu isso seis meses mais tarde, num artigo pequeno, página 12. Ficou olhando por muito tempo."
+  },
+  "BAB": {
+    icon: "🗝️", type: "antihero",
+    title: "O SEGREDO QUE ELA ESCOLHEU SER",
+    desc: "Deixou a criança, entregou Nexo e protegeu a mãe. O Conselho caiu. A mãe é heroína. Nexo saiu da detenção amargo e sem respostas. A criança sobreviveu — Star nunca soube. Ela vive com três segredos agora: o que fez naquela noite nos escombros, o que fez com Nexo, e o que apagou do arquivo. Não são culpas. São escolhas. É a diferença que ela repete pra si mesma quando não consegue dormir."
+  },
+  "BBA": {
+    icon: "⚡", type: "legendary",
+    title: "NINGUÉM VAI ENTENDER. TUDO BEM.",
+    desc: "Deixou a criança, protegeu Nexo e divulgou tudo — incluindo a mãe. Chegou a Voss sem nada além da raiva e do arquivo. O Conselho caiu. A mãe de Star virou um caso complexo que os jornalistas adoram e ninguém resolve. Nexo, quando soube que Star tinha recusado o acordo pra protegê-lo, procurou ela uma vez. Ela não estava. Deixou um bilhete curto. Star leu e jogou fora. Algumas dívidas não precisam de resposta — só de reconhecimento."
+  },
+  "BBB": {
+    icon: "🌟", type: "heroic",
+    title: "O QUE A MÃE PLANTOU",
+    desc: "Deixou a criança, protegeu Nexo e protegeu a memória da mãe. É o caminho em que Star perdeu mais — e guardou mais. O arquivo editado derrubou o Conselho. A mãe é heroína. Nexo está livre e em dívida. A criança sobreviveu sem nunca saber que havia alguém embaixo daquela laje que fez uma escolha. Star voltou aos escombros do Bairro 7 uma noite, sozinha. Ficou em pé no lugar onde encontrou a mãe. Não disse nada. Às vezes honrar alguém é só isso — aparecer."
+  }
+};
+
+// ===== ESTADO =====
+let currentRound = 0;
+let choices = [];
+
+function startGame() {
+  currentRound = 0;
+  choices = [];
+  showScreen('game');
+  renderRound();
+}
+
+function renderRound() {
+  const r = rounds[currentRound];
+  document.getElementById('round-label').textContent = `RODADA ${currentRound + 1} / 3`;
+  document.getElementById('progress-fill').style.width = `${(currentRound / 3) * 100}%`;
+  document.getElementById('scene-tag').textContent = r.tag;
+  document.getElementById('scene-title').textContent = r.title;
+  document.getElementById('scene-desc').textContent = r.desc;
+  document.getElementById('choice-a-title').textContent = r.a.title;
+  document.getElementById('choice-a-desc').textContent = r.a.desc;
+  document.getElementById('choice-b-title').textContent = r.b.title;
+  document.getElementById('choice-b-desc').textContent = r.b.desc;
+  document.getElementById('consequence-banner').classList.add('hidden');
+}
+
+function choose(option) {
+  const prevRound = rounds[currentRound];
+  const consequence = option === 'A' ? prevRound.consequenceA : prevRound.consequenceB;
+  const voice = option === 'A' ? prevRound.voiceA : prevRound.voiceB;
+
+  choices.push(option);
+
+  flashEffect(() => {
+    if (currentRound < 2) {
+      currentRound++;
+      // Show transition screen
+      const nextTag = rounds[currentRound].tag;
+      document.getElementById('t-quote').textContent = voice || '';
+      document.getElementById('t-consequence').textContent = consequence || '';
+      document.getElementById('t-chapter-next').textContent = '▸ A SEGUIR: ' + nextTag;
+      showScreen('transition');
+    } else {
+      showEnding();
+    }
+  });
+}
+
+function continueToNextRound() {
+  flashEffect(() => {
+    renderRound();
+    showScreen('game');
+  });
+}
+
+function showEnding() {
+  const key = choices.join('');
+  const e = endings[key];
+
+  document.getElementById('ending-icon').textContent = e.icon;
+  const titleEl = document.getElementById('ending-title');
+  titleEl.textContent = e.title;
+  titleEl.className = 'ending-title ' + e.type;
+  document.getElementById('ending-desc').textContent = e.desc;
+
+  // Path display
+  const pathEl = document.getElementById('path-display');
+  pathEl.innerHTML = choices.map((c, i) => {
+    const label = c === 'A' ? rounds[i].a.title : rounds[i].b.title;
+    return `<span class="path-step">${c}: ${label}</span>${i < 2 ? '<span class="arrow">→</span>' : ''}`;
+  }).join('');
+
+  document.getElementById('progress-fill').style.width = '100%';
+  showScreen('ending');
+}
+
+function flashEffect(callback) {
+  const flash = document.getElementById('flash');
+  flash.classList.add('flash-in');
+  setTimeout(() => {
+    flash.classList.remove('flash-in');
+    callback();
+  }, 200);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const target = document.getElementById(id);
+  target.classList.remove('hidden');
+  // Re-trigger animation
+  target.style.animation = 'none';
+  void target.offsetWidth;
+  target.style.animation = '';
+}
+
+function restartGame() {
+  flashEffect(() => showScreen('intro'));
+}
+</script>
+</body>
+</html>
